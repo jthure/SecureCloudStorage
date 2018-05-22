@@ -1,0 +1,24 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-gst-plugin",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/gst-plugin/; make;",
+            "group": "build"
+        },
+        {
+            "label": "build-gst-app",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/gst-app/; make;",
+            "dependsOn": ["build-gst-plugin"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+
+    ]
+}

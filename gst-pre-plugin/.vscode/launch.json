@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/gst-app/src/gst-app",
+            "args": ["${workspaceFolder}/gst-app/sintel_trailer-480p.webm"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {"name": "GST_PLUGIN_PATH", "value": "${workspaceFolder}/gst-plugin/src/.libs/"},
+                {"name": "GST_DEBUG_DUMP_DOT_DIR", "value": "."},
+                // {"name": "GST_PLUGIN_PATH", "value": "/usr/local/lib/gstreamer-1.0/"},
+                {"name": "GST_DEBUG", "value": "1,myfilter:6"}
+            ],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": false
+                }
+            ]
+        }
+    ]
+}

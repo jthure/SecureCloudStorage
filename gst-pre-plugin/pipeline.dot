@@ -1,0 +1,136 @@
+digraph pipeline {
+  rankdir=LR;
+  fontname="sans";
+  fontsize="10";
+  labelloc=t;
+  nodesep=.1;
+  ranksep=.2;
+  label="<GstPipeline>\npipeline\n[0]";
+  node [style="filled,rounded", shape=box, fontsize="9", fontname="sans", margin="0.0,0.0"];
+  edge [labelfontsize="6", fontsize="9", fontname="monospace"];
+  
+  legend [
+    pos="0,0!",
+    margin="0.05,0.05",
+    style="filled",
+    label="Legend\lElement-States: [~] void-pending, [0] null, [-] ready, [=] paused, [>] playing\lPad-Activation: [-] none, [>] push, [<] pull\lPad-Flags: [b]locked, [f]lushing, [b]locking, [E]OS; upper-case is set\lPad-Task: [T] has started task, [t] has paused task\l",
+  ];
+  subgraph cluster_videosink_0x555555b75020 {
+    fontname="Bitstream Vera Sans";
+    fontsize="8";
+    style="filled,rounded";
+    color=black;
+    label="GstAutoVideoSink\nvideosink\n[0]\nparent=(GstPipeline) pipeline\nfilter-caps=video/x-raw";
+    subgraph cluster_videosink_0x555555b75020_sink {
+      label="";
+      style="invis";
+      _proxypad0_0x555555b78110 [color=black, fillcolor="#ddddff", label="proxypad0\n[-][bfb]", height="0.2", style="filled,solid"];
+    videosink_0x555555b75020_sink_0x555555b76100 -> _proxypad0_0x555555b78110 [style=dashed, minlen=0]
+      videosink_0x555555b75020_sink_0x555555b76100 [color=black, fillcolor="#ddddff", label="sink\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    fillcolor="#ffffff";
+    subgraph cluster_fake_video_sink_0x555555b38be0 {
+      fontname="Bitstream Vera Sans";
+      fontsize="8";
+      style="filled,rounded";
+      color=black;
+      label="GstFakeSink\nfake-video-sink\n[0]\nparent=(GstAutoVideoSink) videosink";
+      subgraph cluster_fake_video_sink_0x555555b38be0_sink {
+        label="";
+        style="invis";
+        fake_video_sink_0x555555b38be0_sink_0x555555b72560 [color=black, fillcolor="#aaaaff", label="sink\n[-][bFb]", height="0.2", style="filled,solid"];
+      }
+
+      fillcolor="#aaaaff";
+    }
+
+    _proxypad0_0x555555b78110 -> fake_video_sink_0x555555b38be0_sink_0x555555b72560 [label="ANY"]
+  }
+
+  subgraph cluster_pre_dec_0x555555b7c8b0 {
+    fontname="Bitstream Vera Sans";
+    fontsize="8";
+    style="filled,rounded";
+    color=black;
+    label="GstMyFilter\npre_dec\n[0]\nparent=(GstPipeline) pipeline\nmode=2";
+    subgraph cluster_pre_dec_0x555555b7c8b0_sink {
+      label="";
+      style="invis";
+      pre_dec_0x555555b7c8b0_sink_0x555555b730f0 [color=black, fillcolor="#aaaaff", label="sink\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    subgraph cluster_pre_dec_0x555555b7c8b0_src {
+      label="";
+      style="invis";
+      pre_dec_0x555555b7c8b0_src_0x555555b73340 [color=black, fillcolor="#ffaaaa", label="src\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    pre_dec_0x555555b7c8b0_sink_0x555555b730f0 -> pre_dec_0x555555b7c8b0_src_0x555555b73340 [style="invis"];
+    fillcolor="#aaffaa";
+  }
+
+  pre_dec_0x555555b7c8b0_src_0x555555b73340 -> videosink_0x555555b75020_sink_0x555555b76100 [label="ANY"]
+  subgraph cluster_pre_re_enc_0x555555b7c550 {
+    fontname="Bitstream Vera Sans";
+    fontsize="8";
+    style="filled,rounded";
+    color=black;
+    label="GstMyFilter\npre_re_enc\n[0]\nparent=(GstPipeline) pipeline\nmode=1";
+    subgraph cluster_pre_re_enc_0x555555b7c550_sink {
+      label="";
+      style="invis";
+      pre_re_enc_0x555555b7c550_sink_0x555555b72c50 [color=black, fillcolor="#aaaaff", label="sink\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    subgraph cluster_pre_re_enc_0x555555b7c550_src {
+      label="";
+      style="invis";
+      pre_re_enc_0x555555b7c550_src_0x555555b72ea0 [color=black, fillcolor="#ffaaaa", label="src\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    pre_re_enc_0x555555b7c550_sink_0x555555b72c50 -> pre_re_enc_0x555555b7c550_src_0x555555b72ea0 [style="invis"];
+    fillcolor="#aaffaa";
+  }
+
+  pre_re_enc_0x555555b7c550_src_0x555555b72ea0 -> pre_dec_0x555555b7c8b0_sink_0x555555b730f0 [label="ANY"]
+  subgraph cluster_pre_enc_0x555555b7c1f0 {
+    fontname="Bitstream Vera Sans";
+    fontsize="8";
+    style="filled,rounded";
+    color=black;
+    label="GstMyFilter\npre_enc\n[0]\nparent=(GstPipeline) pipeline";
+    subgraph cluster_pre_enc_0x555555b7c1f0_sink {
+      label="";
+      style="invis";
+      pre_enc_0x555555b7c1f0_sink_0x555555b727b0 [color=black, fillcolor="#aaaaff", label="sink\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    subgraph cluster_pre_enc_0x555555b7c1f0_src {
+      label="";
+      style="invis";
+      pre_enc_0x555555b7c1f0_src_0x555555b72a00 [color=black, fillcolor="#ffaaaa", label="src\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    pre_enc_0x555555b7c1f0_sink_0x555555b727b0 -> pre_enc_0x555555b7c1f0_src_0x555555b72a00 [style="invis"];
+    fillcolor="#aaffaa";
+  }
+
+  pre_enc_0x555555b7c1f0_src_0x555555b72a00 -> pre_re_enc_0x555555b7c550_sink_0x555555b72c50 [label="ANY"]
+  subgraph cluster_source_0x5555559d94e0 {
+    fontname="Bitstream Vera Sans";
+    fontsize="8";
+    style="filled,rounded";
+    color=black;
+    label="GstVideoTestSrc\nsource\n[0]\nparent=(GstPipeline) pipeline";
+    subgraph cluster_source_0x5555559d94e0_src {
+      label="";
+      style="invis";
+      source_0x5555559d94e0_src_0x555555b720c0 [color=black, fillcolor="#ffaaaa", label="src\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    fillcolor="#ffaaaa";
+  }
+
+  source_0x5555559d94e0_src_0x555555b720c0 -> pre_enc_0x555555b7c1f0_sink_0x555555b727b0 [labeldistance="10", labelangle="0", label="                                                  ", taillabel="video/x-raw\l              format: { (string)I420, (str... }\l               width: [ 1, 2147483647 ]\l              height: [ 1, 2147483647 ]\l           framerate: [ 0/1, 2147483647/1 ]\l      multiview-mode: { (string)mono, (str... }\lvideo/x-bayer\l              format: { (string)bggr, (str... }\l               width: [ 1, 2147483647 ]\l              height: [ 1, 2147483647 ]\l           framerate: [ 0/1, 2147483647/1 ]\l      multiview-mode: { (string)mono, (str... }\l", headlabel="ANY"]
+}
