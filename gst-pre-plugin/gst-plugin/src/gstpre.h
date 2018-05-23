@@ -48,6 +48,7 @@
 
 #include <gst/gst.h>
 #include <gstreamer-1.0/gst/base/gstbasetransform.h>
+// #include <gstreamer-1.0/gst/base/gstadapter.h>
 #include <charm_embed_api.h>
 
 G_BEGIN_DECLS
@@ -77,6 +78,7 @@ struct _GstPre
   GstBaseTransform element;
 
   GstPad *sinkpad, *srcpad;
+  // GstAdapter *adapter;
 
   gboolean silent;
 
