@@ -30,22 +30,22 @@ digraph pipeline {
     }
 
     fillcolor="#ffffff";
-    subgraph cluster_fake_video_sink_0x555555b3a3e0 {
+    subgraph cluster_fake_video_sink_0x555555b3b1e0 {
       fontname="Bitstream Vera Sans";
       fontsize="8";
       style="filled,rounded";
       color=black;
       label="GstFakeSink\nfake-video-sink\n[0]\nparent=(GstAutoVideoSink) videosink";
-      subgraph cluster_fake_video_sink_0x555555b3a3e0_sink {
+      subgraph cluster_fake_video_sink_0x555555b3b1e0_sink {
         label="";
         style="invis";
-        fake_video_sink_0x555555b3a3e0_sink_0x555555b74580 [color=black, fillcolor="#aaaaff", label="sink\n[-][bFb]", height="0.2", style="filled,solid"];
+        fake_video_sink_0x555555b3b1e0_sink_0x555555b74580 [color=black, fillcolor="#aaaaff", label="sink\n[-][bFb]", height="0.2", style="filled,solid"];
       }
 
       fillcolor="#aaaaff";
     }
 
-    _proxypad0_0x555555b7a130 -> fake_video_sink_0x555555b3a3e0_sink_0x555555b74580 [label="ANY"]
+    _proxypad0_0x555555b7a130 -> fake_video_sink_0x555555b3b1e0_sink_0x555555b74580 [label="ANY"]
   }
 
   subgraph cluster_pre_dec_0x555555b7e8d0 {
@@ -117,20 +117,20 @@ digraph pipeline {
   }
 
   pre_enc_0x555555b7e210_src_0x555555b74a20 -> pre_re_enc_0x555555b7e570_sink_0x555555b74c70 [label="ANY"]
-  subgraph cluster_source_0x5555559da8e0 {
+  subgraph cluster_source_0x5555559db6e0 {
     fontname="Bitstream Vera Sans";
     fontsize="8";
     style="filled,rounded";
     color=black;
     label="GstVideoTestSrc\nsource\n[0]\nparent=(GstPipeline) pipeline";
-    subgraph cluster_source_0x5555559da8e0_src {
+    subgraph cluster_source_0x5555559db6e0_src {
       label="";
       style="invis";
-      source_0x5555559da8e0_src_0x555555b740e0 [color=black, fillcolor="#ffaaaa", label="src\n[-][bFb]", height="0.2", style="filled,solid"];
+      source_0x5555559db6e0_src_0x555555b740e0 [color=black, fillcolor="#ffaaaa", label="src\n[-][bFb]", height="0.2", style="filled,solid"];
     }
 
     fillcolor="#ffaaaa";
   }
 
-  source_0x5555559da8e0_src_0x555555b740e0 -> pre_enc_0x555555b7e210_sink_0x555555b747d0 [labeldistance="10", labelangle="0", label="                                                  ", taillabel="video/x-raw\l              format: { (string)I420, (str... }\l               width: [ 1, 2147483647 ]\l              height: [ 1, 2147483647 ]\l           framerate: [ 0/1, 2147483647/1 ]\l      multiview-mode: { (string)mono, (str... }\lvideo/x-bayer\l              format: { (string)bggr, (str... }\l               width: [ 1, 2147483647 ]\l              height: [ 1, 2147483647 ]\l           framerate: [ 0/1, 2147483647/1 ]\l      multiview-mode: { (string)mono, (str... }\l", headlabel="ANY"]
+  source_0x5555559db6e0_src_0x555555b740e0 -> pre_enc_0x555555b7e210_sink_0x555555b747d0 [labeldistance="10", labelangle="0", label="                                                  ", taillabel="video/x-raw\l              format: { (string)I420, (str... }\l               width: [ 1, 2147483647 ]\l              height: [ 1, 2147483647 ]\l           framerate: [ 0/1, 2147483647/1 ]\l      multiview-mode: { (string)mono, (str... }\lvideo/x-bayer\l              format: { (string)bggr, (str... }\l               width: [ 1, 2147483647 ]\l              height: [ 1, 2147483647 ]\l           framerate: [ 0/1, 2147483647/1 ]\l      multiview-mode: { (string)mono, (str... }\l", headlabel="ANY"]
 }

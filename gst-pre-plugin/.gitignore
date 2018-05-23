@@ -5,3 +5,4 @@ Makefile
 *.libs/
 */compile
 *.o
+*.enc
