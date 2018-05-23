@@ -44,14 +44,14 @@
  */
 
 /**
- * SECTION:element-myfilter
+ * SECTION:element-pre
  *
- * FIXME:Describe myfilter here.
+ * FIXME:Describe pre here.
  *
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v -m fakesrc ! myfilter ! fakesink silent=TRUE
+ * gst-launch -v -m fakesrc ! pre ! fakesink silent=TRUE
  * ]|
  * </refsect2>
  */
@@ -63,12 +63,12 @@
 #include <gst/gst.h>
 #include <gstreamer-1.0/gst/base/gstbasetransform.h>
 
-#include "gstmyfilter.h"
+#include "gstpre.h"
 #include "charm_embed_api.h"
 #include <Python.h>
 
-GST_DEBUG_CATEGORY_STATIC(gst_my_filter_debug);
-#define GST_CAT_DEFAULT gst_my_filter_debug
+GST_DEBUG_CATEGORY_STATIC(gst_pre_debug);
+#define GST_CAT_DEFAULT gst_pre_debug
 
 
 /* Filter signals and args */
@@ -102,20 +102,18 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE("src",
                                                                   GST_PAD_ALWAYS,
                                                                   GST_STATIC_CAPS("ANY"));
 
-#define gst_my_filter_parent_class parent_class
-G_DEFINE_TYPE(GstMyFilter, gst_my_filter, GST_TYPE_BASE_TRANSFORM);
+#define gst_pre_parent_class parent_class
+G_DEFINE_TYPE(GstPre, gst_pre, GST_TYPE_BASE_TRANSFORM);
 
-static void gst_my_filter_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec);
-static void gst_my_filter_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec);
+static void gst_pre_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec);
+static void gst_pre_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec);
 
-// static gboolean gst_my_filter_sink_event (GstPad * pad, GstObject * parent, GstEvent * event);
-// static GstFlowReturn gst_my_filter_chain (GstPad * pad, GstObject * parent, GstBuffer * buf);
-static GstFlowReturn gst_my_filter_transform(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer *out_buf);
-static GstFlowReturn gst_my_filter_prepare_output_buffer(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer **out_buf);
+static GstFlowReturn gst_pre_transform(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer *out_buf);
+static GstFlowReturn gst_pre_prepare_output_buffer(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer **out_buf);
 /* GObject vmethod implementations */
 
-/* initialize the myfilter's class */
-static void gst_my_filter_class_init(GstMyFilterClass *klass)
+/* initialize the pre's class */
+static void gst_pre_class_init(GstPreClass *klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
@@ -123,8 +121,8 @@ static void gst_my_filter_class_init(GstMyFilterClass *klass)
   gobject_class = (GObjectClass *)klass;
   gstelement_class = (GstElementClass *)klass;
 
-  gobject_class->set_property = gst_my_filter_set_property;
-  gobject_class->get_property = gst_my_filter_get_property;
+  gobject_class->set_property = gst_pre_set_property;
+  gobject_class->get_property = gst_pre_get_property;
 
   g_object_class_install_property(gobject_class, PROP_SILENT,
                                   g_param_spec_boolean("silent", "Silent", "Produce verbose output ?",
@@ -145,7 +143,7 @@ static void gst_my_filter_class_init(GstMyFilterClass *klass)
                                   g_param_spec_int("mode", "Mode", "PRE Mode",
                                                        0, 2, 0, G_PARAM_READWRITE));                                                    
   gst_element_class_set_details_simple(gstelement_class,
-                                       "MyFilter",
+                                       "Pre",
                                        "FIXME:Generic",
                                        "FIXME:Generic Template Element",
                                        "jonas <<user@hostname.org>>");
@@ -153,8 +151,8 @@ static void gst_my_filter_class_init(GstMyFilterClass *klass)
   gst_element_class_add_pad_template(gstelement_class, gst_static_pad_template_get(&src_factory));
   gst_element_class_add_pad_template(gstelement_class, gst_static_pad_template_get(&sink_factory));
 
-  GST_BASE_TRANSFORM_CLASS(klass)->transform = GST_DEBUG_FUNCPTR(gst_my_filter_transform);
-  GST_BASE_TRANSFORM_CLASS(klass)->prepare_output_buffer = GST_DEBUG_FUNCPTR(gst_my_filter_prepare_output_buffer);
+  GST_BASE_TRANSFORM_CLASS(klass)->transform = GST_DEBUG_FUNCPTR(gst_pre_transform);
+  GST_BASE_TRANSFORM_CLASS(klass)->prepare_output_buffer = GST_DEBUG_FUNCPTR(gst_pre_prepare_output_buffer);
 }
 
 static Charm_t *InitSignatureScheme(const char *class_file, const char *class_name)
@@ -199,7 +197,7 @@ static Charm_t *InitSignatureScheme(const char *class_file, const char *class_na
  * initialize instance structure
  */
 static void
-gst_my_filter_init(GstMyFilter *filter)
+gst_pre_init(GstPre *filter)
 {
   GST_INFO_OBJECT(filter, "Initializing plugin");
   Charm_t *module = NULL, *group = NULL, *scheme = NULL, *sig = NULL, *hyb = NULL;
@@ -253,10 +251,10 @@ gst_my_filter_init(GstMyFilter *filter)
 }
 
 static void
-gst_my_filter_set_property(GObject *object, guint prop_id,
+gst_pre_set_property(GObject *object, guint prop_id,
                            const GValue *value, GParamSpec *pspec)
 {
-  GstMyFilter *filter = GST_MYFILTER(object);
+  GstPre *filter = GST_PRE(object);
   char *prop_string = NULL;
 
   switch (prop_id)
@@ -290,10 +288,10 @@ gst_my_filter_set_property(GObject *object, guint prop_id,
 }
 
 static void
-gst_my_filter_get_property(GObject *object, guint prop_id,
+gst_pre_get_property(GObject *object, guint prop_id,
                            GValue *value, GParamSpec *pspec)
 {
-  GstMyFilter *filter = GST_MYFILTER(object);
+  GstPre *filter = GST_PRE(object);
 
   switch (prop_id)
   {
@@ -310,20 +308,20 @@ gst_my_filter_get_property(GObject *object, guint prop_id,
 
 /* GstElement vmethod implementations */
 
-static GstFlowReturn gst_my_filter_prepare_output_buffer(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer **out_buf)
+static GstFlowReturn gst_pre_prepare_output_buffer(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer **out_buf)
 {
-  GstMyFilter *filter = GST_MYFILTER(trans);
+  GstPre *filter = GST_PRE(trans);
   gsize extra_encrypted_size = 300000; // TODO: Calculate how much extra space is needed
   *out_buf = gst_buffer_new_allocate(NULL, gst_buffer_get_size(in_buf) + extra_encrypted_size , NULL);
   *out_buf = gst_buffer_make_writable(*out_buf);
   return GST_FLOW_OK;
 }
 static GstFlowReturn
-gst_my_filter_transform(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer *out_buf)
+gst_pre_transform(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer *out_buf)
 {
   Charm_t *pre_op_value = NULL, *pre_op_value_bytes = NULL, *ct = NULL, *input_bytes = NULL;
   Py_ssize_t out_data_size;
-  GstMyFilter *filter = GST_MYFILTER(trans);
+  GstPre *filter = GST_PRE(trans);
   GstMapInfo in_map, out_map;
   gst_buffer_map(in_buf, &in_map, GST_MAP_READ);
   gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
@@ -369,17 +367,17 @@ gst_my_filter_transform(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer *o
  * register the element factories and other features
  */
 static gboolean
-myfilter_init(GstPlugin *myfilter)
+pre_init(GstPlugin *pre)
 {
   /* debug category for fltering log messages
    *
-   * exchange the string 'Template myfilter' with your description
+   * exchange the string 'Template pre' with your description
    */
-  GST_DEBUG_CATEGORY_INIT(gst_my_filter_debug, "myfilter",
-                          0, "Template myfilter");
+  GST_DEBUG_CATEGORY_INIT(gst_pre_debug, "pre",
+                          0, "Proxy re-encryption");
 
-  return gst_element_register(myfilter, "myfilter", GST_RANK_NONE,
-                              GST_TYPE_MYFILTER);
+  return gst_element_register(pre, "pre", GST_RANK_NONE,
+                              GST_TYPE_PRE);
 }
 
 /* PACKAGE: this is usually set by autotools depending on some _INIT macro
@@ -388,19 +386,19 @@ myfilter_init(GstPlugin *myfilter)
  * compile this code. GST_PLUGIN_DEFINE needs PACKAGE to be defined.
  */
 #ifndef PACKAGE
-#define PACKAGE "myfirstmyfilter"
+#define PACKAGE "axis.pre"
 #endif
 
 /* gstreamer looks for this structure to register myfilters
  *
- * exchange the string 'Template myfilter' with your myfilter description
+ * exchange the string 'Template pre' with your pre description
  */
 GST_PLUGIN_DEFINE(
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
-    myfilter,
-    "Template myfilter",
-    myfilter_init,
+    pre,
+    "Proxy re-encryption",
+    pre_init,
     VERSION,
     "LGPL",
     "GStreamer",

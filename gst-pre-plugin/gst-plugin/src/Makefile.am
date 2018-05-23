@@ -3,7 +3,7 @@
 ##############################################################################
 # TODO: change libgstplugin.la to something else, e.g. libmysomething.la     #
 ##############################################################################
-plugin_LTLIBRARIES = libgstmyfilter.la
+plugin_LTLIBRARIES = libgstpre.la
 
 ##############################################################################
 # TODO: for the next set of variables, name the prefix if you named the .la, #
@@ -15,15 +15,15 @@ plugin_LTLIBRARIES = libgstmyfilter.la
 
 ## Plugin 1
 # sources used to compile this plug-in
-libgstmyfilter_la_SOURCES = gstmyfilter.c gstmyfilter.h charm_embed_api.c charm_embed_api.h
+libgstpre_la_SOURCES = gstpre.c gstpre.h charm_embed_api.c charm_embed_api.h
 
 # compiler and linker flags used to compile this plugin, set in configure.ac
-libgstmyfilter_la_CFLAGS = $(GST_CFLAGS) $(PY_CFLAGS)
-libgstmyfilter_la_LIBADD = $(GST_LIBS) $(PY_LIBS)
-libgstmyfilter_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
-libgstmyfilter_la_LIBTOOLFLAGS = --tag=disable-static
+libgstpre_la_CFLAGS = $(GST_CFLAGS) $(PY_CFLAGS)
+libgstpre_la_LIBADD = $(GST_LIBS) $(PY_LIBS)
+libgstpre_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
+libgstpre_la_LIBTOOLFLAGS = --tag=disable-static
 
 
 # headers we need but don't want installed
-# include_HEADERS = gstmyfilter.h charm_embed_api.h
-noinst_HEADERS = gstmyfilter.h charm_embed_api.h
+# include_HEADERS = gstpre.h charm_embed_api.h
+noinst_HEADERS = gstpre.h charm_embed_api.h

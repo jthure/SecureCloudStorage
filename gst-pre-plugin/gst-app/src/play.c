@@ -59,7 +59,7 @@ void
 play_uri (const gchar * uri)
 {
   GstStateChangeReturn sret;
-  GstElement *playbin, *audiosink, *videosink, *videoflip, *myfilter, *filter_bin, *source, *sink, *pipeline, *pre_enc, *pre_re_enc, *pre_dec;
+  GstElement *playbin, *audiosink, *videosink, *videoflip, *pre, *filter_bin, *source, *sink, *pipeline, *pre_enc, *pre_re_enc, *pre_dec;
   GstPad *pad, *ghost_pad;
   GstMessage *msg = NULL;
   GstBus *bus;
@@ -70,9 +70,9 @@ play_uri (const gchar * uri)
   source = gst_element_factory_make("videotestsrc", "source");
   sink = gst_element_factory_make("filesink", "sink");
   videosink = gst_element_factory_make ("autovideosink", "videosink");
-  pre_enc = gst_element_factory_make("myfilter", "pre_enc");
-  pre_re_enc = gst_element_factory_make("myfilter", "pre_re_enc");
-  pre_dec = gst_element_factory_make("myfilter", "pre_dec");
+  pre_enc = gst_element_factory_make("pre", "pre_enc");
+  pre_re_enc = gst_element_factory_make("pre", "pre_re_enc");
+  pre_dec = gst_element_factory_make("pre", "pre_dec");
   
 
   pipeline = gst_pipeline_new("pipeline");
@@ -121,13 +121,13 @@ play_uri (const gchar * uri)
   // g_object_set (playbin, "video-sink", videosink, NULL);
 
   
-  // myfilter = gst_element_factory_make("myfilter", "myfilter");
-  // if(myfilter == NULL) goto no_myfilter;
+  // pre = gst_element_factory_make("pre", "pre");
+  // if(pre == NULL) goto no_myfilter;
 
 
 
   // g_object_set(videoflip, "video-direction", 2, NULL);
-  // g_object_set(playbin, "video-filter", myfilter, NULL);
+  // g_object_set(playbin, "video-filter", pre, NULL);
 
   /* set URI to play back */
   // g_object_set (playbin, "uri", uri, NULL);
@@ -245,7 +245,7 @@ no_videoflip:
   }
 no_myfilter:
   {
-    g_error ("Could not create GStreamer 'myfilter' element. "
+    g_error ("Could not create GStreamer 'pre' element. "
         "Please install it");
     /* not reached, g_error aborts */
     return;

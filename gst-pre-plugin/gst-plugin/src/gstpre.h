@@ -43,8 +43,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef __GST_MYFILTER_H__
-#define __GST_MYFILTER_H__
+#ifndef __GST_PRE_H__
+#define __GST_PRE_H__
 
 #include <gst/gst.h>
 #include <gstreamer-1.0/gst/base/gstbasetransform.h>
@@ -53,26 +53,26 @@
 G_BEGIN_DECLS
 
 /* #defines don't like whitespacey bits */
-#define GST_TYPE_MYFILTER \
-  (gst_my_filter_get_type())
-#define GST_MYFILTER(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_MYFILTER,GstMyFilter))
-#define GST_MYFILTER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_MYFILTER,GstMyFilterClass))
-#define GST_IS_MYFILTER(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_MYFILTER))
-#define GST_IS_MYFILTER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_MYFILTER))
+#define GST_TYPE_PRE \
+  (gst_pre_get_type())
+#define GST_PRE(obj) \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_PRE,GstPre))
+#define GST_PRE_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_PRE,GstPreClass))
+#define GST_IS_PRE(obj) \
+  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_PRE))
+#define GST_IS_PRE_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_PRE))
 
-typedef struct _GstMyFilter      GstMyFilter;
-typedef struct _GstMyFilterClass GstMyFilterClass;
+typedef struct _GstPre      GstPre;
+typedef struct _GstPreClass GstPreClass;
 typedef enum {
   PRE_ENCRYPT = 0,
   PRE_RE_ENCRYPT = 1,
   PRE_DECRYPT = 2
 } PRE_MODE;
 
-struct _GstMyFilter
+struct _GstPre
 {
   GstBaseTransform element;
 
@@ -85,13 +85,13 @@ struct _GstMyFilter
   Charm_t *scheme, *group, *params, *pk, *sk, *rk;
 };
 
-struct _GstMyFilterClass 
+struct _GstPreClass 
 {
   GstBaseTransformClass parent_class;
 };
 
-GType gst_my_filter_get_type (void);
+GType gst_pre_get_type (void);
 
 G_END_DECLS
 
-#endif /* __GST_MYFILTER_H__ */
+#endif /* __GST_PRE_H__ */
