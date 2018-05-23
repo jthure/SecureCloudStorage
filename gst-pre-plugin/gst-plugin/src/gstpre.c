@@ -62,7 +62,7 @@
 
 #include <gst/gst.h>
 #include <gstreamer-1.0/gst/base/gstbasetransform.h>
-// #include <gstreamer-1.0/gst/base/gstadapter.h>
+#include <gstreamer-1.0/gst/base/gstadapter.h>
 
 #include "gstpre.h"
 #include "charm_embed_api.h"
@@ -243,7 +243,7 @@ gst_pre_init(GstPre *filter)
   filter->sk = NULL;
   filter->mode = PRE_ENCRYPT;
   filter->silent = FALSE;
-  // filter->adapter = gst_adapter_new();
+  filter->adapter = gst_adapter_new();
   // g_print("PARAMS: %s\n", PyBytes_AsString(objectToBytes(params, group)));
   // g_print("PK_A: %s\n", PyBytes_AsString(objectToBytes(pk_a, group)));
   // g_print("SK_A: %s\n", PyBytes_AsString(objectToBytes(sk_a, group)));
@@ -323,27 +323,34 @@ gst_pre_transform(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer *out_buf
 {
   Charm_t *pre_op_value = NULL, *pre_op_value_bytes = NULL, *ct = NULL, *input_bytes = NULL;
   Py_ssize_t out_data_size;
-  // GstFlowReturn ret = GST_FLOW_OK;
+  GstFlowReturn ret = GST_FLOW_OK;
   GstPre *filter = GST_PRE(trans);
-  // gst_adapter_push(filter->adapter, in_buf);
+  gst_adapter_push(filter->adapter, in_buf);
 
   GstMapInfo in_map, out_map;
-  gst_buffer_map(in_buf, &in_map, GST_MAP_READ);
+  // gst_buffer_map(in_buf, &in_map, GST_MAP_READ);
   gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
 
   // Create python bytes from the input
-  input_bytes = PyBytes_FromStringAndSize(in_map.data, in_map.size);
+  // input_bytes = PyBytes_FromStringAndSize(in_map.data, in_map.size);
+  volatile int written_bytes = 0;
   if (filter->mode == PRE_ENCRYPT)
   {
-    // while(gst_adapter_available(filter->adapter) >= 512 && ret == GST_FLOW_OK){
-      // const gchar *data = gst_adapter_map(filter->adapter, 512);
-      // input_bytes = PyBytes_FromStringAndSize(data, 512);
+    while(gst_adapter_available(filter->adapter) >= 50000 && ret == GST_FLOW_OK){
+      const gchar *data = gst_adapter_map(filter->adapter, 50000);
+      input_bytes = PyBytes_FromStringAndSize(data, 50000);
       pre_op_value = CallMethod(filter->scheme, "encrypt_lvl2", "%O%O%O%$s", filter->params, filter->pk, input_bytes, "l", "2018"); //PRE encrypt lvl2
       pre_op_value_bytes = objectToBytes(pre_op_value, filter->group); //Serialize lvl 2 ciphertext to bytes
-      // char *pre_op_value_string;
-      // char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
-      // ret = GST_FLOW_OK;
-    // }
+      char *pre_op_value_string;
+      char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
+      for(int i = 0;i < out_data_size; ++i){
+        out_map.data[written_bytes] = pre_op_value_string[i];
+        ++written_bytes;
+      }
+      gst_adapter_unmap(filter->adapter);
+      gst_adapter_flush(filter->adapter, 50000);
+      ret = GST_FLOW_OK;
+    }
   }
   else if (filter->mode == PRE_DECRYPT)
   {
@@ -361,15 +368,15 @@ gst_pre_transform(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer *out_buf
     return GST_FLOW_ERROR;
   }
   // Extract string from the python bytes object (result from the PRE operation)
-  char *pre_op_value_string;
-  char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
+  // char *pre_op_value_string;
+  // char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
 
   // Copy the bytes into the output buffer
-  for(int i = 0; i < out_data_size; ++i){
-    out_map.data[i] = pre_op_value_string[i];
-  }
-  gst_buffer_set_size(out_buf, out_data_size);
-  gst_buffer_unmap(in_buf, &in_map);
+  // for(int i = 0; i < out_data_size; ++i){
+  //   out_map.data[i] = pre_op_value_string[i];
+  // }
+  gst_buffer_set_size(out_buf, written_bytes);
+  // gst_buffer_unmap(in_buf, &in_map);
   gst_buffer_unmap(out_buf, &out_map);
   return GST_FLOW_OK;
 }
