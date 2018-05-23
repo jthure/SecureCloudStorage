@@ -49,6 +49,8 @@ int main(int argc, char *argv[])
     g_object_set(pre_enc, "pk", pk_a, NULL);
     g_object_set(pre_enc, "sk", sk_a, NULL);
 
+    GST_DEBUG_BIN_TO_DOT_FILE(pipeline, GST_DEBUG_GRAPH_SHOW_ALL, "encryptor_pipeline");
+    
     /* Start playing */
     ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE)
