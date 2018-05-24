@@ -1,0 +1,72 @@
+digraph pipeline {
+  rankdir=LR;
+  fontname="sans";
+  fontsize="10";
+  labelloc=t;
+  nodesep=.1;
+  ranksep=.2;
+  label="<GstPipeline>\npipeline\n[0]";
+  node [style="filled,rounded", shape=box, fontsize="9", fontname="sans", margin="0.0,0.0"];
+  edge [labelfontsize="6", fontsize="9", fontname="monospace"];
+  
+  legend [
+    pos="0,0!",
+    margin="0.05,0.05",
+    style="filled",
+    label="Legend\lElement-States: [~] void-pending, [0] null, [-] ready, [=] paused, [>] playing\lPad-Activation: [-] none, [>] push, [<] pull\lPad-Flags: [b]locked, [f]lushing, [b]locking, [E]OS; upper-case is set\lPad-Task: [T] has started task, [t] has paused task\l",
+  ];
+  subgraph cluster_sink_0x5555559a2020 {
+    fontname="Bitstream Vera Sans";
+    fontsize="8";
+    style="filled,rounded";
+    color=black;
+    label="GstFileSink\nsink\n[0]\nparent=(GstPipeline) pipeline\nsync=FALSE\nlocation=\"/media/sf_dev/axis/SecureCloudStorage/gst-pre-plugin/gst-app/video.enc\"";
+    subgraph cluster_sink_0x5555559a2020_sink {
+      label="";
+      style="invis";
+      sink_0x5555559a2020_sink_0x55555599c330 [color=black, fillcolor="#aaaaff", label="sink\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    fillcolor="#aaaaff";
+  }
+
+  subgraph cluster_pre_enc_0x5555559a6010 {
+    fontname="Bitstream Vera Sans";
+    fontsize="8";
+    style="filled,rounded";
+    color=black;
+    label="GstPre\npre_enc\n[0]\nparent=(GstPipeline) pipeline";
+    subgraph cluster_pre_enc_0x5555559a6010_sink {
+      label="";
+      style="invis";
+      pre_enc_0x5555559a6010_sink_0x55555599c580 [color=black, fillcolor="#aaaaff", label="sink\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    subgraph cluster_pre_enc_0x5555559a6010_src {
+      label="";
+      style="invis";
+      pre_enc_0x5555559a6010_src_0x55555599c7d0 [color=black, fillcolor="#ffaaaa", label="src\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    pre_enc_0x5555559a6010_sink_0x55555599c580 -> pre_enc_0x5555559a6010_src_0x55555599c7d0 [style="invis"];
+    fillcolor="#aaffaa";
+  }
+
+  pre_enc_0x5555559a6010_src_0x55555599c7d0 -> sink_0x5555559a2020_sink_0x55555599c330 [label="ANY"]
+  subgraph cluster_source_0x55555599a040 {
+    fontname="Bitstream Vera Sans";
+    fontsize="8";
+    style="filled,rounded";
+    color=black;
+    label="GstVideoTestSrc\nsource\n[0]\nparent=(GstPipeline) pipeline\nnum-buffers=100";
+    subgraph cluster_source_0x55555599a040_src {
+      label="";
+      style="invis";
+      source_0x55555599a040_src_0x55555599c0e0 [color=black, fillcolor="#ffaaaa", label="src\n[-][bFb]", height="0.2", style="filled,solid"];
+    }
+
+    fillcolor="#ffaaaa";
+  }
+
+  source_0x55555599a040_src_0x55555599c0e0 -> pre_enc_0x5555559a6010_sink_0x55555599c580 [labeldistance="10", labelangle="0", label="                                                  ", taillabel="video/x-raw\l              format: { (string)I420, (str... }\l               width: [ 1, 2147483647 ]\l              height: [ 1, 2147483647 ]\l           framerate: [ 0/1, 2147483647/1 ]\l      multiview-mode: { (string)mono, (str... }\lvideo/x-bayer\l              format: { (string)bggr, (str... }\l               width: [ 1, 2147483647 ]\l              height: [ 1, 2147483647 ]\l           framerate: [ 0/1, 2147483647/1 ]\l      multiview-mode: { (string)mono, (str... }\l", headlabel="ANY"]
+}

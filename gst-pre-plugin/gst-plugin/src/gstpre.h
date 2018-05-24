@@ -47,7 +47,7 @@
 #define __GST_PRE_H__
 
 #include <gst/gst.h>
-#include <gstreamer-1.0/gst/base/gstbasetransform.h>
+//#include <gstreamer-1.0/gst/base/gstbasetransform.h>
 #include <gstreamer-1.0/gst/base/gstadapter.h>
 #include <charm_embed_api.h>
 
@@ -75,7 +75,7 @@ typedef enum {
 
 struct _GstPre
 {
-  GstBaseTransform element;
+  GstElement element;
 
   GstPad *sinkpad, *srcpad;
   GstAdapter *adapter;
@@ -89,7 +89,7 @@ struct _GstPre
 
 struct _GstPreClass 
 {
-  GstBaseTransformClass parent_class;
+  GstElementClass parent_class;
 };
 
 GType gst_pre_get_type (void);

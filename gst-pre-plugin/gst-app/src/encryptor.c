@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 
     /* Modify the source's properties */
     g_object_set(source, "pattern", 0, NULL);
+    g_object_set(source, "num-buffers", 100, NULL);
     g_object_set(sink, "location", argv[1], NULL);
     g_object_set(pre_enc, "params", params, NULL);
     g_object_set(pre_enc, "mode", 0, NULL);
