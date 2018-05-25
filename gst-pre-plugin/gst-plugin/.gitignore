@@ -14,3 +14,5 @@ stamp-*
 my-plugin-*.tar.*
 *~
 
+*.dot
+*.reenc

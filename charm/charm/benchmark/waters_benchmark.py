@@ -1,6 +1,7 @@
 # from charm.schemes.abenc.abenc_waters09 import CPabe09
 from charm.schemes.abenc.abenc_waters09_cca_jm import CPabe09CCA
 from charm.schemes.abenc.abenc_waters09_jm import CPabe09
+from charm.schemes.abenc.waters11 import Waters11
 from charm.schemes.abenc.ac17 import AC17CPABE
 from charm.toolbox.pairinggroup import PairingGroup, GT
 import os
@@ -77,6 +78,19 @@ def benchmark_waters11_cca():
     msg_prime = benchmark(lambda: scheme.decrypt(customer_a_mpk, sk_a_b, c), "Decrypt")
     assert msg == msg_prime
 
+def benchmark_waters11_2():
+    global group_obj
+    print("W11 2")
+    group_obj = PairingGroup('SS512')
+    scheme = Waters11(group_obj, 100)
+    policy = '2018'
+    msg = group_obj.random(GT)
+    assert group_obj.InitBenchmark(), "failed to initialize utils"
+    customer_a_msk, customer_a_mpk = benchmark(lambda: scheme.setup(), "Setup")
+    sk_a_b = benchmark(lambda: scheme.keygen(customer_a_mpk, customer_a_msk, ['2018']), "Keygen")
+    c = benchmark(lambda: scheme.encrypt(customer_a_mpk, msg, policy), "Encrypt")
+    msg_prime = benchmark(lambda: scheme.decrypt(customer_a_mpk, sk_a_b, c), "Decrypt")
+    assert msg == msg_prime
 
 def benchmark_ac17():
     global group_obj
@@ -100,6 +114,6 @@ def benchmark_ac17():
 
 
 if __name__ == "__main__":
-    benchmark_waters11()
-    benchmark_waters11_cca()
-    # benchmark_ac17()
+    # benchmark_waters11()
+    # benchmark_waters11_cca()
+    benchmark_waters11_2()

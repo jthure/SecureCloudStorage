@@ -73,7 +73,6 @@
 GST_DEBUG_CATEGORY_STATIC(gst_pre_debug);
 #define GST_CAT_DEFAULT gst_pre_debug
 
-
 /* Filter signals and args */
 enum
 {
@@ -114,7 +113,7 @@ static void gst_pre_get_property(GObject *object, guint prop_id, GValue *value, 
 // static GstFlowReturn gst_pre_transform(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer *out_buf);
 // static GstFlowReturn gst_pre_prepare_output_buffer(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer **out_buf);
 static GstFlowReturn gst_pre_chain(GstPad *pad, GstObject *parent, GstBuffer *buf);
-static gboolean gst_pre_sink_event (GstPad * pad, GstObject * parent, GstEvent * event);
+static gboolean gst_pre_sink_event(GstPad *pad, GstObject *parent, GstEvent *event);
 /* GObject vmethod implementations */
 
 /* initialize the pre's class */
@@ -134,19 +133,19 @@ static void gst_pre_class_init(GstPreClass *klass)
                                                        FALSE, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_PRE_PARAMS,
                                   g_param_spec_string("params", "Params", "PRE Params",
-                                                       NULL, G_PARAM_READWRITE));
+                                                      NULL, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_PRE_PK,
                                   g_param_spec_string("pk", "PK", "PRE Public key",
-                                                       NULL, G_PARAM_READWRITE));
+                                                      NULL, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_PRE_SK,
                                   g_param_spec_string("sk", "SK", "PRE Secret key",
-                                                       NULL, G_PARAM_READWRITE));
+                                                      NULL, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_PRE_RK,
                                   g_param_spec_string("rk", "RK", "PRE Re-encryption key",
-                                                       NULL, G_PARAM_READWRITE));
+                                                      NULL, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_PRE_MODE,
                                   g_param_spec_int("mode", "Mode", "PRE Mode",
-                                                       0, 2, 0, G_PARAM_READWRITE));                                                    
+                                                   0, 2, 0, G_PARAM_READWRITE));
   gst_element_class_set_details_simple(gstelement_class,
                                        "Pre",
                                        "FIXME:Generic",
@@ -205,15 +204,15 @@ static void
 gst_pre_init(GstPre *filter)
 {
   GST_INFO_OBJECT(filter, "Initializing plugin");
-  filter->sinkpad = gst_pad_new_from_static_template (&sink_factory, "sink");
-   gst_pad_set_event_function (filter->sinkpad, GST_DEBUG_FUNCPTR(gst_pre_sink_event));
-  gst_pad_set_chain_function (filter->sinkpad, GST_DEBUG_FUNCPTR(gst_pre_chain));
-  GST_PAD_SET_PROXY_CAPS (filter->sinkpad);
-  gst_element_add_pad (GST_ELEMENT (filter), filter->sinkpad);
+  filter->sinkpad = gst_pad_new_from_static_template(&sink_factory, "sink");
+  gst_pad_set_event_function(filter->sinkpad, GST_DEBUG_FUNCPTR(gst_pre_sink_event));
+  gst_pad_set_chain_function(filter->sinkpad, GST_DEBUG_FUNCPTR(gst_pre_chain));
+  GST_PAD_SET_PROXY_CAPS(filter->sinkpad);
+  gst_element_add_pad(GST_ELEMENT(filter), filter->sinkpad);
 
-  filter->srcpad = gst_pad_new_from_static_template (&src_factory, "src");
-  GST_PAD_SET_PROXY_CAPS (filter->srcpad);
-  gst_element_add_pad (GST_ELEMENT (filter), filter->srcpad);
+  filter->srcpad = gst_pad_new_from_static_template(&src_factory, "src");
+  GST_PAD_SET_PROXY_CAPS(filter->srcpad);
+  gst_element_add_pad(GST_ELEMENT(filter), filter->srcpad);
 
   Charm_t *module = NULL, *group = NULL, *scheme = NULL, *sig = NULL, *hyb = NULL;
 
@@ -258,6 +257,7 @@ gst_pre_init(GstPre *filter)
   filter->mode = PRE_ENCRYPT;
   filter->silent = FALSE;
   filter->adapter = gst_adapter_new();
+  filter->bytes_in_object = -1;
   // g_print("PARAMS: %s\n", PyBytes_AsString(objectToBytes(params, group)));
   // g_print("PK_A: %s\n", PyBytes_AsString(objectToBytes(pk_a, group)));
   // g_print("SK_A: %s\n", PyBytes_AsString(objectToBytes(sk_a, group)));
@@ -268,7 +268,7 @@ gst_pre_init(GstPre *filter)
 
 static void
 gst_pre_set_property(GObject *object, guint prop_id,
-                           const GValue *value, GParamSpec *pspec)
+                     const GValue *value, GParamSpec *pspec)
 {
   GstPre *filter = GST_PRE(object);
   char *prop_string = NULL;
@@ -305,7 +305,7 @@ gst_pre_set_property(GObject *object, guint prop_id,
 
 static void
 gst_pre_get_property(GObject *object, guint prop_id,
-                           GValue *value, GParamSpec *pspec)
+                     GValue *value, GParamSpec *pspec)
 {
   GstPre *filter = GST_PRE(object);
 
@@ -325,31 +325,32 @@ gst_pre_get_property(GObject *object, guint prop_id,
 /* GstElement vmethod implementations */
 /* this function handles sink events */
 static gboolean
-gst_pre_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
+gst_pre_sink_event(GstPad *pad, GstObject *parent, GstEvent *event)
 {
   GstPre *filter;
   gboolean ret;
 
-  filter = GST_PRE (parent);
+  filter = GST_PRE(parent);
 
-  GST_LOG_OBJECT (filter, "Received %s event: %" GST_PTR_FORMAT,
-      GST_EVENT_TYPE_NAME (event), event);
+  GST_LOG_OBJECT(filter, "Received %s event: %" GST_PTR_FORMAT,
+                 GST_EVENT_TYPE_NAME(event), event);
 
-  switch (GST_EVENT_TYPE (event)) {
-    case GST_EVENT_CAPS:
-    {
-      GstCaps * caps;
+  switch (GST_EVENT_TYPE(event))
+  {
+  case GST_EVENT_CAPS:
+  {
+    GstCaps *caps;
 
-      gst_event_parse_caps (event, &caps);
-      /* do something with the caps */
+    gst_event_parse_caps(event, &caps);
+    /* do something with the caps */
 
-      /* and forward */
-      ret = gst_pad_event_default (pad, parent, event);
-      break;
-    }
-    default:
-      ret = gst_pad_event_default (pad, parent, event);
-      break;
+    /* and forward */
+    ret = gst_pad_event_default(pad, parent, event);
+    break;
+  }
+  default:
+    ret = gst_pad_event_default(pad, parent, event);
+    break;
   }
   return ret;
 }
@@ -358,7 +359,7 @@ gst_pre_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
  * this function does the actual processing
  */
 static GstFlowReturn
-gst_pre_chain2 (GstPad * pad, GstObject * parent, GstBuffer * buf)
+gst_pre_chain2(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
   GstPre *filter;
   Charm_t *pre_op_value = NULL, *pre_op_value_bytes = NULL, *ct = NULL, *input_bytes = NULL;
@@ -367,19 +368,21 @@ gst_pre_chain2 (GstPad * pad, GstObject * parent, GstBuffer * buf)
   filter = GST_PRE(parent);
   gst_adapter_push(filter->adapter, buf);
   gsize extra_encrypted_size = 300000; // TODO: Calculate how much extra space is needed
-  GstBuffer *out_buf = gst_buffer_new_allocate(NULL, gst_buffer_get_size(buf) + extra_encrypted_size , NULL);
+  GstBuffer *out_buf = gst_buffer_new_allocate(NULL, gst_buffer_get_size(buf) + extra_encrypted_size, NULL);
   out_buf = gst_buffer_make_writable(out_buf);
   GstMapInfo out_map;
   gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
   volatile written_bytes = 0;
-  while(gst_adapter_available(filter->adapter) >= 50000 && ret == GST_FLOW_OK){
+  while (gst_adapter_available(filter->adapter) >= 50000 && ret == GST_FLOW_OK)
+  {
     const gchar *data = gst_adapter_map(filter->adapter, 50000);
     input_bytes = PyBytes_FromStringAndSize(data, 50000);
     pre_op_value = CallMethod(filter->scheme, "encrypt_lvl2", "%O%O%O%$s", filter->params, filter->pk, input_bytes, "l", "2018"); //PRE encrypt lvl2
-    pre_op_value_bytes = objectToBytes(pre_op_value, filter->group); //Serialize lvl 2 ciphertext to bytes
+    pre_op_value_bytes = objectToBytes(pre_op_value, filter->group);                                                              //Serialize lvl 2 ciphertext to bytes
     char *pre_op_value_string;
     char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
-    for(int i = 0;i < out_data_size; ++i){
+    for (int i = 0; i < out_data_size; ++i)
+    {
       out_map.data[written_bytes] = pre_op_value_string[i];
       ++written_bytes;
     }
@@ -391,13 +394,13 @@ gst_pre_chain2 (GstPad * pad, GstObject * parent, GstBuffer * buf)
   // gst_buffer_unmap(in_buf, &in_map);
   gst_buffer_unmap(out_buf, &out_map);
   if (filter->silent == FALSE)
-    g_print ("I'm plugged, therefore I'm in.\n");
+    g_print("I'm plugged, therefore I'm in.\n");
 
   /* just push out the incoming buffer without touching it */
-  return gst_pad_push (filter->srcpad, out_buf);
+  return gst_pad_push(filter->srcpad, out_buf);
 }
 static GstFlowReturn
-gst_pre_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
+gst_pre_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
   GstPre *filter;
   Charm_t *pre_op_value = NULL, *pre_op_value_bytes = NULL, *ct = NULL, *input_bytes = NULL;
@@ -405,47 +408,124 @@ gst_pre_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
   GstMapInfo in_map, out_map;
   filter = GST_PRE(parent);
   gsize extra_encrypted_size = 300000; // TODO: Calculate how much extra space is needed
-  GstBuffer *out_buf = gst_buffer_new_allocate(NULL, gst_buffer_get_size(buf) + extra_encrypted_size , NULL);
+  GstBuffer *out_buf = gst_buffer_new_allocate(NULL, gst_buffer_get_size(buf) + extra_encrypted_size, NULL);
   out_buf = gst_buffer_make_writable(out_buf);
 
-  if(filter->mode == PRE_ENCRYPT){
+  if (filter->mode == PRE_ENCRYPT)
+  {
     gst_buffer_map(buf, &in_map, GST_MAP_READ);
     gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
     input_bytes = PyBytes_FromStringAndSize(in_map.data, in_map.size);
     pre_op_value = CallMethod(filter->scheme, "encrypt_lvl2", "%O%O%O%$s", filter->params, filter->pk, input_bytes, "l", "2018"); //PRE encrypt lvl2
-    pre_op_value_bytes = objectToBytes(pre_op_value, filter->group); //Serialize lvl 2 ciphertext to bytes
+    pre_op_value_bytes = objectToBytes(pre_op_value, filter->group);                                                              //Serialize lvl 2 ciphertext to bytes
     char *pre_op_value_string;
     char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
     // volatile gint64 x = (gint64) out_data_size;
     // g_print("Sizes: %d, %d\n", sizeof(Py_ssize_t), sizeof(gint64));
     // g_print("Num: %d, %d\n", out_data_size, x);
     GstByteWriter *byte_writer = gst_byte_writer_new();
-    if(!gst_byte_writer_put_int64_be(byte_writer, out_data_size)){
+    if (!gst_byte_writer_put_int64_be(byte_writer, out_data_size))
+    {
       g_printerr("Failed to write size bytes.\n");
     }
     guint8 *size_bytes = gst_byte_writer_free_and_get_data(byte_writer);
     g_print("size_bytes: %s", size_bytes);
-    for(int i = 0; i< 8; ++i){
+    for (int i = 0; i < 8; ++i)
+    {
       out_map.data[i] = size_bytes[i];
     }
-    for(int i = 0;i < out_data_size; ++i){
-      out_map.data[i+8] = pre_op_value_string[i];
+    for (int i = 0; i < out_data_size; ++i)
+    {
+      out_map.data[i + 8] = pre_op_value_string[i];
     }
     gst_buffer_set_size(out_buf, out_data_size + 8);
     gst_buffer_unmap(out_buf, &out_map);
     gst_buffer_unmap(buf, &in_map);
-    return gst_pad_push (filter->srcpad, out_buf);
-  } else if(filter->mode == PRE_RE_ENCRYPT){
-    gst_buffer_map(buf, &in_map, GST_MAP_READ);
-    GstByteReader *byte_reader = gst_byte_reader_new (in_map.data, 8);
-    gint64 size_of_object;
-    gst_byte_reader_get_int64_be (byte_reader, &size_of_object);
-    gst_buffer_unmap(buf, &in_map);
-    g_print("%d\n", size_of_object);
-    gst_adapter_push(filter->adapter, buf);
-    int x = gst_adapter_available(filter->adapter);
-    g_print("%d", x);
+    return gst_pad_push(filter->srcpad, out_buf);
   }
+  else if (filter->mode == PRE_RE_ENCRYPT)
+  {
+    gst_adapter_push(filter->adapter, buf);
+    if (filter->bytes_in_object == -1)
+    {
+      // gst_buffer_map(buf, &in_map, GST_MAP_READ);
+      guint8 *size_of_object_bytes = gst_adapter_take(filter->adapter, 8);
+      GstByteReader *byte_reader = gst_byte_reader_new(size_of_object_bytes, 8);
+      gint64 size_of_object;
+      gst_byte_reader_get_int64_be(byte_reader, &size_of_object);
+      g_print("Size of object: %d\n", size_of_object);
+      filter->bytes_in_object = size_of_object;
+      // gst_buffer_unmap(buf, &in_map);
+      // gst_adapter_push(filter->adapter, buf);
+      // gst_adapter_flush(filter->adapter, 8);
+    }
+    gsize bytes_available = gst_adapter_available(filter->adapter);
+    if(bytes_available >= filter->bytes_in_object) {
+      gchar *data = gst_adapter_take(filter->adapter, filter->bytes_in_object);
+      input_bytes = PyBytes_FromStringAndSize(data, filter->bytes_in_object);
+      ct = bytesToObject(input_bytes, filter->group); //De-serialize bytes into lvl 2 ciphertext
+      pre_op_value = CallMethod(filter->scheme, "re_encrypt", "%O%O%O", filter->params, filter->rk, ct); //PRE re-encrypt
+      pre_op_value_bytes = objectToBytes(pre_op_value, filter->group); //Serialize lvl 1 ciphertext to bytes
+      // Extract string from the python bytes object (result from the PRE operation)
+      char *pre_op_value_string;
+      char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
+
+      gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
+      GstByteWriter *byte_writer = gst_byte_writer_new();
+      if (!gst_byte_writer_put_int64_be(byte_writer, out_data_size))
+      {
+        g_printerr("Failed to write size bytes.\n");
+      }
+      guint8 *size_bytes = gst_byte_writer_free_and_get_data(byte_writer);
+      g_print("size_bytes: %s", size_bytes);
+      for (int i = 0; i < 8; ++i)
+      {
+        out_map.data[i] = size_bytes[i];
+      }
+      // Copy the bytes into the output buffer
+      for(int i = 0; i < out_data_size; ++i){
+        out_map.data[i+8] = pre_op_value_string[i];
+      }
+      gst_buffer_set_size(out_buf, out_data_size + 8);
+      gst_buffer_unmap(out_buf, &out_map);
+      filter->bytes_in_object = -1;
+      return gst_pad_push(filter->srcpad, out_buf);
+    }
+  }else if(filter->mode == PRE_DECRYPT) {
+      gst_adapter_push(filter->adapter, buf);
+      if (filter->bytes_in_object == -1)
+      {
+        gst_buffer_map(buf, &in_map, GST_MAP_READ);
+        guint8 *size_of_object_bytes = gst_adapter_take(filter->adapter, 8);
+        GstByteReader *byte_reader = gst_byte_reader_new(size_of_object_bytes, 8);
+        gint64 size_of_object;
+        gst_byte_reader_get_int64_be(byte_reader, &size_of_object);
+        g_print("Size of object: %d\n", size_of_object);
+        filter->bytes_in_object = size_of_object;
+        // gst_buffer_unmap(buf, &in_map);
+        // gst_adapter_push(filter->adapter, buf);
+        // gst_adapter_flush(filter->adapter, 8);
+      }
+      gsize bytes_available = gst_adapter_available(filter->adapter);
+      if(bytes_available >= filter->bytes_in_object) {
+        gchar *data = gst_adapter_take(filter->adapter, filter->bytes_in_object);
+        input_bytes = PyBytes_FromStringAndSize(data, filter->bytes_in_object);
+        ct = bytesToObject(input_bytes, filter->group); //De-serialize bytes into lvl 2 ciphertext
+        pre_op_value = CallMethod(filter->scheme, "decrypt_lvl1", "%O%O%O", filter->params, filter->sk, ct); //PRE decrypt
+        char *pre_op_value_string;
+        char sucessful = PyBytes_AsStringAndSize(pre_op_value, &pre_op_value_string, &out_data_size) != -1;
+        gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
+
+        // Copy the bytes into the output buffer
+        for(int i = 0; i < out_data_size; ++i){
+          out_map.data[i] = pre_op_value_string[i];
+        }
+        gst_buffer_set_size(out_buf, out_data_size);
+        gst_buffer_unmap(out_buf, &out_map);
+        filter->bytes_in_object = -1;
+        return gst_pad_push(filter->srcpad, out_buf);
+      }
+    }
 
   // GstFlowReturn ret = GST_FLOW_OK;
   // gst_adapter_push(filter->adapter, buf);
@@ -471,7 +551,7 @@ gst_pre_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
   // // gst_buffer_unmap(in_buf, &in_map);
   // gst_buffer_unmap(out_buf, &out_map);
   if (filter->silent == FALSE)
-    g_print ("I'm plugged, therefore I'm in.\n");
+    g_print("I'm plugged, therefore I'm in.\n");
 
   /* just push out the incoming buffer without touching it */
   return GST_FLOW_OK;

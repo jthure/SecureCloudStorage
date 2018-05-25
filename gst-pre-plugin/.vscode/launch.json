@@ -5,6 +5,41 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Decryptor",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/gst-app/src/decryptor",
+            "args": [
+                "${workspaceFolder}/gst-app/video.reenc"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "GST_PLUGIN_PATH",
+                    "value": "${workspaceFolder}/gst-plugin/src/.libs/"
+                },
+                {
+                    "name": "GST_DEBUG_DUMP_DOT_DIR",
+                    "value": "."
+                },
+                // {"name": "GST_PLUGIN_PATH", "value": "/usr/local/lib/gstreamer-1.0/"},
+                {
+                    "name": "GST_DEBUG",
+                    "value": "1,myfilter:6"
+                }
+            ],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "Reencryptor",
             "type": "cppdbg",
             "request": "launch",

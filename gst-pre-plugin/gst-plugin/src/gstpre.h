@@ -82,6 +82,8 @@ struct _GstPre
 
   gboolean silent;
 
+  Py_ssize_t bytes_in_object;
+
   PRE_MODE mode; 
 
   Charm_t *scheme, *group, *params, *pk, *sk, *rk;
