@@ -61,7 +61,6 @@
 #endif
 
 #include <gst/gst.h>
-//#include <gstreamer-1.0/gst/base/gstbasetransform.h>
 #include <gstreamer-1.0/gst/base/gstadapter.h>
 #include <gst/base/gstbytewriter.h>
 #include <gst/base/gstbytereader.h>
@@ -110,8 +109,6 @@ G_DEFINE_TYPE(GstPre, gst_pre, GST_TYPE_ELEMENT);
 static void gst_pre_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec);
 static void gst_pre_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec);
 
-// static GstFlowReturn gst_pre_transform(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer *out_buf);
-// static GstFlowReturn gst_pre_prepare_output_buffer(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer **out_buf);
 static GstFlowReturn gst_pre_chain(GstPad *pad, GstObject *parent, GstBuffer *buf);
 static gboolean gst_pre_sink_event(GstPad *pad, GstObject *parent, GstEvent *event);
 /* GObject vmethod implementations */
@@ -155,8 +152,6 @@ static void gst_pre_class_init(GstPreClass *klass)
   gst_element_class_add_pad_template(gstelement_class, gst_static_pad_template_get(&src_factory));
   gst_element_class_add_pad_template(gstelement_class, gst_static_pad_template_get(&sink_factory));
 
-  // GST_BASE_TRANSFORM_CLASS(klass)->transform = GST_DEBUG_FUNCPTR(gst_pre_transform);
-  // GST_BASE_TRANSFORM_CLASS(klass)->prepare_output_buffer = GST_DEBUG_FUNCPTR(gst_pre_prepare_output_buffer);
 }
 
 static Charm_t *InitSignatureScheme(const char *class_file, const char *class_name)
@@ -359,81 +354,54 @@ gst_pre_sink_event(GstPad *pad, GstObject *parent, GstEvent *event)
  * this function does the actual processing
  */
 static GstFlowReturn
-gst_pre_chain2(GstPad *pad, GstObject *parent, GstBuffer *buf)
-{
-  GstPre *filter;
-  Charm_t *pre_op_value = NULL, *pre_op_value_bytes = NULL, *ct = NULL, *input_bytes = NULL;
-  Py_ssize_t out_data_size;
-  GstFlowReturn ret = GST_FLOW_OK;
-  filter = GST_PRE(parent);
-  gst_adapter_push(filter->adapter, buf);
-  gsize extra_encrypted_size = 300000; // TODO: Calculate how much extra space is needed
-  GstBuffer *out_buf = gst_buffer_new_allocate(NULL, gst_buffer_get_size(buf) + extra_encrypted_size, NULL);
-  out_buf = gst_buffer_make_writable(out_buf);
-  GstMapInfo out_map;
-  gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
-  volatile written_bytes = 0;
-  while (gst_adapter_available(filter->adapter) >= 50000 && ret == GST_FLOW_OK)
-  {
-    const gchar *data = gst_adapter_map(filter->adapter, 50000);
-    input_bytes = PyBytes_FromStringAndSize(data, 50000);
-    pre_op_value = CallMethod(filter->scheme, "encrypt_lvl2", "%O%O%O%$s", filter->params, filter->pk, input_bytes, "l", "2018"); //PRE encrypt lvl2
-    pre_op_value_bytes = objectToBytes(pre_op_value, filter->group);                                                              //Serialize lvl 2 ciphertext to bytes
-    char *pre_op_value_string;
-    char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
-    for (int i = 0; i < out_data_size; ++i)
-    {
-      out_map.data[written_bytes] = pre_op_value_string[i];
-      ++written_bytes;
-    }
-    gst_adapter_unmap(filter->adapter);
-    gst_adapter_flush(filter->adapter, 50000);
-    ret = GST_FLOW_OK;
-  }
-  gst_buffer_set_size(out_buf, written_bytes);
-  // gst_buffer_unmap(in_buf, &in_map);
-  gst_buffer_unmap(out_buf, &out_map);
-  if (filter->silent == FALSE)
-    g_print("I'm plugged, therefore I'm in.\n");
-
-  /* just push out the incoming buffer without touching it */
-  return gst_pad_push(filter->srcpad, out_buf);
-}
-static GstFlowReturn
 gst_pre_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
   GstPre *filter;
   Charm_t *pre_op_value = NULL, *pre_op_value_bytes = NULL, *ct = NULL, *input_bytes = NULL;
   Py_ssize_t out_data_size;
+  char *pre_op_value_string;
   GstMapInfo in_map, out_map;
   filter = GST_PRE(parent);
   gsize extra_encrypted_size = 300000; // TODO: Calculate how much extra space is needed
   GstBuffer *out_buf = gst_buffer_new_allocate(NULL, gst_buffer_get_size(buf) + extra_encrypted_size, NULL);
   out_buf = gst_buffer_make_writable(out_buf);
+  gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
 
   if (filter->mode == PRE_ENCRYPT)
   {
     gst_buffer_map(buf, &in_map, GST_MAP_READ);
-    gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
-    input_bytes = PyBytes_FromStringAndSize(in_map.data, in_map.size);
-    pre_op_value = CallMethod(filter->scheme, "encrypt_lvl2", "%O%O%O%$s", filter->params, filter->pk, input_bytes, "l", "2018"); //PRE encrypt lvl2
-    pre_op_value_bytes = objectToBytes(pre_op_value, filter->group);                                                              //Serialize lvl 2 ciphertext to bytes
-    char *pre_op_value_string;
-    char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
-    // volatile gint64 x = (gint64) out_data_size;
-    // g_print("Sizes: %d, %d\n", sizeof(Py_ssize_t), sizeof(gint64));
-    // g_print("Num: %d, %d\n", out_data_size, x);
+    if(!(input_bytes = PyBytes_FromStringAndSize(in_map.data, in_map.size))){
+      g_printerr("Failed to convert indata to python bytes\n");
+      return GST_FLOW_ERROR;
+    }
+    //PRE encrypt lvl2
+    if(!(pre_op_value = CallMethod(filter->scheme, "encrypt_lvl2", "%O%O%O%$s", filter->params, filter->pk, input_bytes, "l", "2018"))){
+      g_printerr("Failed to call encrypt level 2 in charm.\n");
+      return GST_FLOW_ERROR;
+    }
+    //Serialize lvl 2 ciphertext to bytes
+    if(!(pre_op_value_bytes = objectToBytes(pre_op_value, filter->group))){
+      g_printerr("Failed to serialize python object to python bytes.\n");
+      return GST_FLOW_ERROR;
+    }
+    // Get pointer to bytes in python bytes object
+    if(PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) == -1){
+      g_printerr("Failed to extract bytes from python bytes.\n");
+      return GST_FLOW_ERROR;    
+    }
+    // Write size of object at the first 8 bytes in outbuf
     GstByteWriter *byte_writer = gst_byte_writer_new();
     if (!gst_byte_writer_put_int64_be(byte_writer, out_data_size))
     {
       g_printerr("Failed to write size bytes.\n");
+      return GST_FLOW_ERROR;
     }
     guint8 *size_bytes = gst_byte_writer_free_and_get_data(byte_writer);
-    g_print("size_bytes: %s", size_bytes);
     for (int i = 0; i < 8; ++i)
     {
       out_map.data[i] = size_bytes[i];
     }
+    // Write the object in outbuf after the size of it
     for (int i = 0; i < out_data_size; ++i)
     {
       out_map.data[i + 8] = pre_op_value_string[i];
@@ -445,44 +413,56 @@ gst_pre_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
   }
   else if (filter->mode == PRE_RE_ENCRYPT)
   {
-    gst_adapter_push(filter->adapter, buf);
+    gst_adapter_push(filter->adapter, buf); // Append buffer
+    // Check if we should start to read a new object. If so start with reading the object's size
     if (filter->bytes_in_object == -1)
     {
-      // gst_buffer_map(buf, &in_map, GST_MAP_READ);
       guint8 *size_of_object_bytes = gst_adapter_take(filter->adapter, 8);
       GstByteReader *byte_reader = gst_byte_reader_new(size_of_object_bytes, 8);
       gint64 size_of_object;
       gst_byte_reader_get_int64_be(byte_reader, &size_of_object);
-      g_print("Size of object: %d\n", size_of_object);
       filter->bytes_in_object = size_of_object;
-      // gst_buffer_unmap(buf, &in_map);
-      // gst_adapter_push(filter->adapter, buf);
-      // gst_adapter_flush(filter->adapter, 8);
     }
+    // Check if we have accumulated the the whole object
     gsize bytes_available = gst_adapter_available(filter->adapter);
     if(bytes_available >= filter->bytes_in_object) {
       gchar *data = gst_adapter_take(filter->adapter, filter->bytes_in_object);
-      input_bytes = PyBytes_FromStringAndSize(data, filter->bytes_in_object);
-      ct = bytesToObject(input_bytes, filter->group); //De-serialize bytes into lvl 2 ciphertext
-      pre_op_value = CallMethod(filter->scheme, "re_encrypt", "%O%O%O", filter->params, filter->rk, ct); //PRE re-encrypt
-      pre_op_value_bytes = objectToBytes(pre_op_value, filter->group); //Serialize lvl 1 ciphertext to bytes
+      if(!(input_bytes = PyBytes_FromStringAndSize(data, filter->bytes_in_object))){
+        g_printerr("Failed to convert indata to python bytes.\n");
+        return GST_FLOW_ERROR;    
+      }
+      //De-serialize bytes into lvl 2 ciphertext
+      if(!(ct = bytesToObject(input_bytes, filter->group))){
+        g_printerr("Failed to de-serialize bytes to python ciphertext object.\n");
+        return GST_FLOW_ERROR;
+      }
+      //PRE re-encrypt
+      if(!(pre_op_value = CallMethod(filter->scheme, "re_encrypt", "%O%O%O", filter->params, filter->rk, ct))){
+        g_printerr("Failed to call re-encrypt in charm.\n");
+      }
+      //Serialize lvl 1 ciphertext to bytes 
+      if(!(pre_op_value_bytes = objectToBytes(pre_op_value, filter->group))){
+        g_printerr("Failed to serialize python object to python bytes.\n");
+        return GST_FLOW_ERROR;
+      }
       // Extract string from the python bytes object (result from the PRE operation)
-      char *pre_op_value_string;
-      char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
+      if(PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) == -1){
+        g_printerr("Failed to extract bytes from python bytes.\n");
+        return GST_FLOW_ERROR;    
+      }
 
-      gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
+      // Write size of object at the first 8 bytes in outbuf      
       GstByteWriter *byte_writer = gst_byte_writer_new();
       if (!gst_byte_writer_put_int64_be(byte_writer, out_data_size))
       {
         g_printerr("Failed to write size bytes.\n");
       }
       guint8 *size_bytes = gst_byte_writer_free_and_get_data(byte_writer);
-      g_print("size_bytes: %s", size_bytes);
       for (int i = 0; i < 8; ++i)
       {
         out_map.data[i] = size_bytes[i];
       }
-      // Copy the bytes into the output buffer
+      // Write the object in outbuf after the size of it
       for(int i = 0; i < out_data_size; ++i){
         out_map.data[i+8] = pre_op_value_string[i];
       }
@@ -493,30 +473,37 @@ gst_pre_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
     }
   }else if(filter->mode == PRE_DECRYPT) {
       gst_adapter_push(filter->adapter, buf);
+      // Check if we should start to read a new object. If so start with reading the object's size      
       if (filter->bytes_in_object == -1)
       {
-        gst_buffer_map(buf, &in_map, GST_MAP_READ);
         guint8 *size_of_object_bytes = gst_adapter_take(filter->adapter, 8);
         GstByteReader *byte_reader = gst_byte_reader_new(size_of_object_bytes, 8);
         gint64 size_of_object;
         gst_byte_reader_get_int64_be(byte_reader, &size_of_object);
-        g_print("Size of object: %d\n", size_of_object);
         filter->bytes_in_object = size_of_object;
-        // gst_buffer_unmap(buf, &in_map);
-        // gst_adapter_push(filter->adapter, buf);
-        // gst_adapter_flush(filter->adapter, 8);
       }
       gsize bytes_available = gst_adapter_available(filter->adapter);
       if(bytes_available >= filter->bytes_in_object) {
         gchar *data = gst_adapter_take(filter->adapter, filter->bytes_in_object);
-        input_bytes = PyBytes_FromStringAndSize(data, filter->bytes_in_object);
-        ct = bytesToObject(input_bytes, filter->group); //De-serialize bytes into lvl 2 ciphertext
-        pre_op_value = CallMethod(filter->scheme, "decrypt_lvl1", "%O%O%O", filter->params, filter->sk, ct); //PRE decrypt
-        char *pre_op_value_string;
-        char sucessful = PyBytes_AsStringAndSize(pre_op_value, &pre_op_value_string, &out_data_size) != -1;
-        gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
-
-        // Copy the bytes into the output buffer
+        if(!(input_bytes = PyBytes_FromStringAndSize(data, filter->bytes_in_object))){
+          g_printerr("Failed to convert indata to python bytes.\n");
+          return GST_FLOW_ERROR;    
+        }
+        //De-serialize bytes into lvl 1 ciphertext
+        if(!(ct = bytesToObject(input_bytes, filter->group))){
+          g_printerr("Failed to de-serialize bytes to python ciphertext object.\n");
+          return GST_FLOW_ERROR;
+        }
+        //PRE decrypt
+        if(!(pre_op_value = CallMethod(filter->scheme, "decrypt_lvl1", "%O%O%O", filter->params, filter->sk, ct))){
+          g_printerr("Failed to call decrypt_lvl1 in charm.\n");          
+        }
+        // Extract string from the python bytes object (result from the PRE operation)
+        if(PyBytes_AsStringAndSize(pre_op_value, &pre_op_value_string, &out_data_size) == -1){
+          g_printerr("Failed to extract bytes from python bytes.\n");
+          return GST_FLOW_ERROR;    
+        }
+        // Write the raw bytes in outbuf
         for(int i = 0; i < out_data_size; ++i){
           out_map.data[i] = pre_op_value_string[i];
         }
@@ -526,106 +513,8 @@ gst_pre_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
         return gst_pad_push(filter->srcpad, out_buf);
       }
     }
-
-  // GstFlowReturn ret = GST_FLOW_OK;
-  // gst_adapter_push(filter->adapter, buf);
-  // GstMapInfo out_map;
-  // gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
-  // volatile written_bytes = 0;
-  // while(gst_adapter_available(filter->adapter) >= 50000 && ret == GST_FLOW_OK){
-  //   const gchar *data = gst_adapter_map(filter->adapter, 50000);
-  //   input_bytes = PyBytes_FromStringAndSize(data, 50000);
-  //   pre_op_value = CallMethod(filter->scheme, "encrypt_lvl2", "%O%O%O%$s", filter->params, filter->pk, input_bytes, "l", "2018"); //PRE encrypt lvl2
-  //   pre_op_value_bytes = objectToBytes(pre_op_value, filter->group); //Serialize lvl 2 ciphertext to bytes
-  //   char *pre_op_value_string;
-  //   char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
-  //   for(int i = 0;i < out_data_size; ++i){
-  //     out_map.data[written_bytes] = pre_op_value_string[i];
-  //     ++written_bytes;
-  //   }
-  //   gst_adapter_unmap(filter->adapter);
-  //   gst_adapter_flush(filter->adapter, 50000);
-  //   ret = GST_FLOW_OK;
-  // }
-  // gst_buffer_set_size(out_buf, written_bytes);
-  // // gst_buffer_unmap(in_buf, &in_map);
-  // gst_buffer_unmap(out_buf, &out_map);
-  if (filter->silent == FALSE)
-    g_print("I'm plugged, therefore I'm in.\n");
-
-  /* just push out the incoming buffer without touching it */
   return GST_FLOW_OK;
 }
-// static GstFlowReturn gst_pre_prepare_output_buffer(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer **out_buf)
-// {
-//   GstPre *filter = GST_PRE(trans);
-//   gsize extra_encrypted_size = 300000; // TODO: Calculate how much extra space is needed
-//   *out_buf = gst_buffer_new_allocate(NULL, gst_buffer_get_size(in_buf) + extra_encrypted_size , NULL);
-//   *out_buf = gst_buffer_make_writable(*out_buf);
-//   return GST_FLOW_OK;
-// }
-// static GstFlowReturn
-// gst_pre_transform(GstBaseTransform *trans, GstBuffer *in_buf, GstBuffer *out_buf)
-// {
-//   Charm_t *pre_op_value = NULL, *pre_op_value_bytes = NULL, *ct = NULL, *input_bytes = NULL;
-//   Py_ssize_t out_data_size;
-//   GstFlowReturn ret = GST_FLOW_OK;
-//   GstPre *filter = GST_PRE(trans);
-//   gst_adapter_push(filter->adapter, in_buf);
-
-//   GstMapInfo in_map, out_map;
-//   // gst_buffer_map(in_buf, &in_map, GST_MAP_READ);
-//   gst_buffer_map(out_buf, &out_map, GST_MAP_WRITE);
-
-//   // Create python bytes from the input
-//   // input_bytes = PyBytes_FromStringAndSize(in_map.data, in_map.size);
-//   volatile int written_bytes = 0;
-//   if (filter->mode == PRE_ENCRYPT)
-//   {
-//     while(gst_adapter_available(filter->adapter) >= 50000 && ret == GST_FLOW_OK){
-//       const gchar *data = gst_adapter_map(filter->adapter, 50000);
-//       input_bytes = PyBytes_FromStringAndSize(data, 50000);
-//       pre_op_value = CallMethod(filter->scheme, "encrypt_lvl2", "%O%O%O%$s", filter->params, filter->pk, input_bytes, "l", "2018"); //PRE encrypt lvl2
-//       pre_op_value_bytes = objectToBytes(pre_op_value, filter->group); //Serialize lvl 2 ciphertext to bytes
-//       char *pre_op_value_string;
-//       char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
-//       for(int i = 0;i < out_data_size; ++i){
-//         out_map.data[written_bytes] = pre_op_value_string[i];
-//         ++written_bytes;
-//       }
-//       gst_adapter_unmap(filter->adapter);
-//       gst_adapter_flush(filter->adapter, 50000);
-//       ret = GST_FLOW_OK;
-//     }
-//   }
-//   else if (filter->mode == PRE_DECRYPT)
-//   {
-//     ct = bytesToObject(input_bytes, filter->group); //De-serialize bytes into lvl 1 ciphertext
-//     pre_op_value_bytes = CallMethod(filter->scheme, "decrypt_lvl1", "%O%O%O", filter->params, filter->sk, ct); //PRE decrypt lvl1
-//   }
-//   else if(filter->mode == PRE_RE_ENCRYPT)
-//   {
-//     ct = bytesToObject(input_bytes, filter->group); //De-serialize bytes into lvl 2 ciphertext
-//     pre_op_value = CallMethod(filter->scheme, "re_encrypt", "%O%O%O", filter->params, filter->rk, ct); //PRE re-encrypt
-//     pre_op_value_bytes = objectToBytes(pre_op_value, filter->group); //Serialize lvl 1 ciphertext to bytes
-//   }
-//   else{
-//     g_printerr("Invalid PRE mode.\n");
-//     return GST_FLOW_ERROR;
-//   }
-//   // Extract string from the python bytes object (result from the PRE operation)
-//   // char *pre_op_value_string;
-//   // char sucessful = PyBytes_AsStringAndSize(pre_op_value_bytes, &pre_op_value_string, &out_data_size) != -1;
-
-//   // Copy the bytes into the output buffer
-//   // for(int i = 0; i < out_data_size; ++i){
-//   //   out_map.data[i] = pre_op_value_string[i];
-//   // }
-//   gst_buffer_set_size(out_buf, written_bytes);
-//   // gst_buffer_unmap(in_buf, &in_map);
-//   gst_buffer_unmap(out_buf, &out_map);
-//   return GST_FLOW_OK;
-// }
 
 /* entry point to initialize the plug-in
  * initialize the plug-in itself

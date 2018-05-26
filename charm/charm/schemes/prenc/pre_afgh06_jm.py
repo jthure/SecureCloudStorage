@@ -149,12 +149,3 @@ class AFGH06(UniPREnc):
             print('\nRe-encrypt...')
             self.group.debug(c_b)
         return c_b
-
-from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
-groupObj = PairingGroup('SS512')
-pre = AFGH06(groupObj)
-params = pre.setup()
-(pk_a, sk_a) = pre.keygen(params)
-(pk_b, sk_b) = pre.keygen(params)
-rk = pre.re_keygen(params, sk_a, pk_b)
-print(groupObj.serialize(rk, compression=False))

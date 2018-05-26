@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
     /* Create the elements */
     source = gst_element_factory_make("filesrc", "source");
-    sink = gst_element_factory_make("autovideosink", "sink");
+    sink = gst_element_factory_make("xvimagesink", "sink");
     videoparser = gst_element_factory_make("rawvideoparse", "videoparser");
     pre_dec = gst_element_factory_make("pre", "pre_dec");
 

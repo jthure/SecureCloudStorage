@@ -69,7 +69,7 @@ play_uri (const gchar * uri)
   // source = gst_element_factory_make("urisourcebin", "source");
   source = gst_element_factory_make("videotestsrc", "source");
   sink = gst_element_factory_make("filesink", "sink");
-  videosink = gst_element_factory_make ("autovideosink", "videosink");
+  videosink = gst_element_factory_make ("xvimagesink", "videosink");
   pre_enc = gst_element_factory_make("pre", "pre_enc");
   pre_re_enc = gst_element_factory_make("pre", "pre_re_enc");
   pre_dec = gst_element_factory_make("pre", "pre_dec");

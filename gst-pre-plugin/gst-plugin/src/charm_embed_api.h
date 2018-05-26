@@ -40,7 +40,7 @@ extern "C" {
 #include <stdlib.h>
 #include <errno.h>
 
-#define DEBUG	1
+//#define DEBUG	1
 
 #if defined(BUILD_PAIR) && defined(BUILD_PBC)
 
