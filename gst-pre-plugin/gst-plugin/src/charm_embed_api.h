@@ -97,7 +97,7 @@ typedef enum _result_type {
 typedef PyObject Charm_t; // user facing abstraction for Python
 
 #ifdef DEBUG
-#define debug(...)	printf("DEBUG: "__VA_ARGS__)
+#define debug(...)	printf("DEBUG2: "__VA_ARGS__)
 #else
 #define debug(...)
 #endif

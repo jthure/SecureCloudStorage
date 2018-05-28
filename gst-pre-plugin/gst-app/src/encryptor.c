@@ -6,7 +6,7 @@ const char *sk_a = "eJyVT7sOwjAM/JUoc4a45MmvIBQV1KndAkio6r9zlwR2Bjv2+c4577qukz6r
 
 int main(int argc, char *argv[])
 {
-    GstElement *pipeline, *source, *sink, *pre_enc;
+    GstElement *pipeline = NULL, *source = NULL, *sink = NULL, *pre_enc = NULL;
     GstBus *bus;
     GstMessage *msg;
     GstStateChangeReturn ret;
@@ -20,8 +20,11 @@ int main(int argc, char *argv[])
 
     /* Create the elements */
     source = gst_element_factory_make("videotestsrc", "source");
+    if(!source) goto no_source;
     sink = gst_element_factory_make("filesink", "sink");
+    if(!sink) goto no_sink;
     pre_enc = gst_element_factory_make("pre", "pre_enc");
+    if(!pre_enc) goto no_pre;
 
     /* Create the empty pipeline */
     pipeline = gst_pipeline_new("pipeline");
@@ -96,4 +99,23 @@ int main(int argc, char *argv[])
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
     return 0;
+
+    no_pre:
+        {
+            g_error ("Could not create GStreamer 'pre' element. Please install it");
+            /* not reached, g_error aborts */
+            return -1;
+        }
+    no_source:
+        {
+            g_error ("Could not create GStreamer source element. Please install it");
+            /* not reached, g_error aborts */
+            return -1;
+        }
+    no_sink:
+        {
+            g_error ("Could not create GStreamer sink element. Please install it");
+            /* not reached, g_error aborts */
+            return -1;
+        }
 }

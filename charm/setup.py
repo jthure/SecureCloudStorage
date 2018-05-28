@@ -1,5 +1,7 @@
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
+from setuptools.command.install import install
+from distutils import log # needed for outputting information messages 
 from distutils.core import  Command, Extension
 from distutils.sysconfig import get_python_lib
 import os, platform, sys, shutil, re, fileinput
@@ -59,6 +61,21 @@ class UninstallCommand(Command):
             if re.match('.*\.so$', files):
                 #print(path_to_charm+'/charm/'+files)
                 os.remove(path_to_charm+'/charm/'+files)
+
+class OverrideInstall(install):
+    
+    def run(self):
+        import stat, os.path
+        log.info("Custom install command.")
+        install.run(self)
+        outputs = self.get_outputs()
+        for file_path in outputs:
+            if os.path.isfile(file_path):
+                mode = os.stat(file_path).st_mode
+                if not mode & stat.S_IROTH:
+                    log.info("Adding read permission for others to file: %s", (file_path))
+                    os.chmod(file_path, mode ^ stat.S_IROTH)
+        pass
 
 _ext_modules = []
 
@@ -296,4 +313,6 @@ setup(name = 'Charm-Crypto',
                 ],
     license = 'LGPL',
     cmdclass={'uninstall':UninstallCommand,'test':PyTest}
+    # cmdclass={'uninstall':UninstallCommand,'test':PyTest, 'install': OverrideInstall}
 )
+
