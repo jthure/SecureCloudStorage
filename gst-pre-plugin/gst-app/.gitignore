@@ -16,5 +16,12 @@ my-app-*.tar.*
 *~
 
 src/gst-app
+src/encryptor
+src/re-encryptor
+src/decryptor
+
+*.dot
+*.png
+
 
 
