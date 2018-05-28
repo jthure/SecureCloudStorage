@@ -13,11 +13,12 @@ charm/config.py
 *.swp
 **.swp
 **.cproject
-**.tar.*
+#**.tar.*
 **__pycache__
 .project
 .pydevproject
 .DS_Store
+deps/pbc/pbc-0.5.14
 
 
 *.py[cod]
