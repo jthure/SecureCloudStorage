@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+pushd charm
+./quick-install-debian
+popd
+pushd gst-pre-plugin
+./quick-install-debian
+popd
+echo DONE!

@@ -1,0 +1,22 @@
+#! /bin/bash
+set -e
+sudo apt install build-essential python3 python3-setuptools python3-pip libgmp-dev libssl-dev flex bison
+pip3 install --user pyparsing
+pushd deps/pbc
+if [ -d "pbc-0.5.14" ]; then
+  rm -r pbc-0.5.14/
+fi
+tar -xf pbc-0.5.14.tar.gz
+pushd pbc-0.5.14
+./configure
+make
+sudo make install
+popd
+popd
+if [ -f "./charm/config.mk" ]; then
+  sudo make clean
+fi
+./configure.sh
+make
+sudo make install
+sudo ldconfig
