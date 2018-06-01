@@ -5,6 +5,7 @@ pushd gst-plugin
 ./autogen.sh
 make
 sudo make install
+#export GST_PLUGIN_PATH=$(find /usr/local/lib/ -type d | grep gstreamer*)
 popd
 pushd gst-app
 ./autogen.sh
